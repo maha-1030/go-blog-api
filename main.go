@@ -18,8 +18,6 @@ func main() {
 	host := os.Getenv("HOST")
 	port := os.Getenv("PORT")
 
-	fmt.Println("host: ", host, " --- port: ", port)
-
 	err := http.ListenAndServe(host+":"+port, router)
 	if err != nil {
 		fmt.Print(err)
