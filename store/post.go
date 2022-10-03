@@ -36,7 +36,7 @@ func GetPostStore() PostStore {
 
 // Create will create the new Post in the database and responds with the newly created Post and error if any
 func (p *post) Create(postRequest *models.Post) (newPost *models.Post, err error) {
-	if res := db.Create(postRequest); res.Error != nil {
+	if err := db.Create(postRequest).Error; err != nil {
 		fmt.Println("Error while creating the new Post, err: ", err)
 
 		return nil, err
@@ -49,11 +49,9 @@ func (p *post) Create(postRequest *models.Post) (newPost *models.Post, err error
 func (p *post) Get(id int) (existingPost *models.Post, err error) {
 	existingPost = &models.Post{}
 
-	if res := db.First(existingPost, id); res.Error != nil {
-		if res.Error == gorm.ErrRecordNotFound {
-			fmt.Println("No Post found with the ID: ", id)
-
-			return nil, fmt.Errorf("no Post found with the ID: %v", id)
+	if err := db.First(existingPost, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
 		}
 
 		fmt.Println("Error while retrieving a Post with ID: ", id, ", err: ", err)
@@ -67,22 +65,18 @@ func (p *post) Get(id int) (existingPost *models.Post, err error) {
 // Update will update the Post with given PostID and responds with updated data and error if any
 func (p *post) Update(id int, postRequest *models.Post) (updatedPost *models.Post, err error) {
 	postRequest.ID = uint(id)
-	if res := db.Save(postRequest); res.Error != nil {
+	if err := db.Save(postRequest).Error; err != nil {
 		fmt.Println("Error while updating the Post with ID: ", id, ", err: ", err)
 
 		return nil, err
 	}
 
-	if updatedPost, err = p.Get(id); err != nil {
-		return nil, err
-	}
-
-	return updatedPost, nil
+	return p.Get(id)
 }
 
 // Delete will delete Post with given PostID and responds with error if any
 func (p *post) Delete(id int) (err error) {
-	if res := db.Delete(&models.Post{}, id); res.Error != nil {
+	if err := db.Delete(&models.Post{}, id).Error; err != nil {
 		fmt.Println("Error while deleting the Post with ID: ", id, ", err: ", err)
 
 		return err

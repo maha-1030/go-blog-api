@@ -28,6 +28,7 @@ var postService PostService
 func NewPostService() PostService {
 	return &post{
 		ps: store.GetPostStore(),
+		ts: store.GetTagStore(),
 		us: store.GetUserStore(),
 	}
 }
@@ -51,6 +52,9 @@ func (p *post) Create(username string, postRequest *models.Post) (newPost *model
 	if err != nil {
 		return nil, err
 	}
+	if existingUser == nil {
+		return nil, fmt.Errorf("no user found with the authorized username: %v", username)
+	}
 
 	postRequest.AuthorID = existingUser.ID
 
@@ -58,6 +62,12 @@ func (p *post) Create(username string, postRequest *models.Post) (newPost *model
 		t, err := p.ts.GetByTagLine(postRequest.Tags[i].TagLine)
 		if err != nil {
 			return nil, err
+		}
+		if t == nil {
+			t, err = p.ts.Create(&postRequest.Tags[i])
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		postRequest.Tags[i].ID = t.ID
@@ -73,7 +83,14 @@ func (p *post) Get(idString string) (existingPost *models.Post, err error) {
 		return nil, err
 	}
 
-	return p.ps.Get(id)
+	if existingPost, err = p.ps.Get(id); err != nil {
+		return nil, err
+	}
+	if existingPost == nil {
+		return nil, fmt.Errorf("no post found with the id: %v", id)
+	}
+
+	return existingPost, nil
 }
 
 // Update checks for the existence of post and calls store layer to update requested fields of post
@@ -87,10 +104,16 @@ func (p *post) Update(idString, username string, postRequest *models.Post) (upda
 	if err != nil {
 		return nil, err
 	}
+	if existingUser == nil {
+		return nil, fmt.Errorf("no user found with the authorized username: %v", username)
+	}
 
 	existingPost, err := p.ps.Get(id)
 	if err != nil {
 		return nil, err
+	}
+	if existingPost == nil {
+		return nil, fmt.Errorf("no post found with the id: %v", id)
 	}
 
 	if existingUser.ID != existingPost.AuthorID {
@@ -119,10 +142,16 @@ func (p *post) Delete(idString, username string) (err error) {
 	if err != nil {
 		return err
 	}
+	if existingUser == nil {
+		return fmt.Errorf("no user found with the authorized username: %v", username)
+	}
 
 	existingPost, err := p.ps.Get(id)
 	if err != nil {
 		return nil
+	}
+	if existingPost == nil {
+		return fmt.Errorf("no post found with the id: %v", id)
 	}
 
 	if existingUser.ID != existingPost.AuthorID {

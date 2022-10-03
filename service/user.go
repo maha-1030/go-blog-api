@@ -72,7 +72,13 @@ func (u *user) Create(userRequest *models.User) (newUser *models.User, err error
 		return nil, fmt.Errorf("username is already in use")
 	}
 
-	return u.us.Create(userRequest)
+	if newUser, err = u.us.Create(userRequest); err != nil {
+		return nil, err
+	}
+
+	newUser.Password = ""
+
+	return newUser, nil
 }
 
 // Get validates the idString and calls store layer to get User by ID
@@ -84,11 +90,15 @@ func (u *user) Get(idString, username string) (existingUser *models.User, err er
 
 	if existingUser, err = u.us.Get(id); err != nil {
 		return nil, err
+	} else if existingUser == nil {
+		return nil, fmt.Errorf("no user found with id: %v", id)
 	}
 
 	if existingUser.Username != username {
 		return nil, fmt.Errorf("you are not allowed to get other user details")
 	}
+
+	existingUser.Password = ""
 
 	return
 }
@@ -103,6 +113,9 @@ func (u *user) Update(idString, username string, userRequest *models.User) (upda
 	existingUser, err := u.us.Get(id)
 	if err != nil {
 		return nil, err
+	}
+	if existingUser == nil {
+		return nil, fmt.Errorf("no user found with id: %v", id)
 	}
 
 	if existingUser.Username != username {
@@ -134,7 +147,13 @@ func (u *user) Update(idString, username string, userRequest *models.User) (upda
 		}
 	}
 
-	return u.us.Update(id, userRequest)
+	if updatedUser, err = u.us.Update(id, userRequest); err != nil {
+		return nil, err
+	}
+
+	updatedUser.Password = ""
+
+	return updatedUser, nil
 }
 
 // Delete will deletes the User with given id
@@ -147,6 +166,9 @@ func (u *user) Delete(idString, username string) (err error) {
 	existingUser, err := u.us.Get(id)
 	if err != nil {
 		return err
+	}
+	if existingUser == nil {
+		return fmt.Errorf("no User found with id: %v", id)
 	}
 
 	if existingUser.Username != username {

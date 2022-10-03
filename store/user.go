@@ -38,7 +38,7 @@ func GetUserStore() UserStore {
 
 // Create will create the new User in the database and responds with the newly created User and error if any
 func (u *user) Create(userRequest *models.User) (newUser *models.User, err error) {
-	if res := db.Create(userRequest); res.Error != nil {
+	if err := db.Create(userRequest).Error; err != nil {
 		fmt.Println("Error while creating the new User, err: ", err)
 
 		return nil, err
@@ -51,11 +51,9 @@ func (u *user) Create(userRequest *models.User) (newUser *models.User, err error
 func (u *user) Get(id int) (existingUser *models.User, err error) {
 	existingUser = &models.User{}
 
-	if res := db.First(existingUser, id); res.Error != nil {
-		if res.Error == gorm.ErrRecordNotFound {
-			fmt.Println("No User found with the ID: ", id)
-
-			return nil, fmt.Errorf("no User found with the ID: %v", id)
+	if err := db.First(existingUser, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
 		}
 
 		fmt.Println("Error while retrieving a User with ID: ", id, ", err: ", err)
@@ -70,11 +68,9 @@ func (u *user) Get(id int) (existingUser *models.User, err error) {
 func (u *user) GetByUsername(username string) (existingUser *models.User, err error) {
 	existingUser = &models.User{}
 
-	if res := db.Where("name = ?", username).First(existingUser); res.Error != nil {
-		if res.Error == gorm.ErrRecordNotFound {
-			fmt.Println("No User found with the username: ", username)
-
-			return nil, fmt.Errorf("no User found with the username: %v", username)
+	if err := db.Where("username = ?", username).First(existingUser).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
 		}
 
 		fmt.Println("Error while retrieving a User with username: ", username, ", err: ", err)
@@ -88,22 +84,18 @@ func (u *user) GetByUsername(username string) (existingUser *models.User, err er
 // Update will update the User with given UserID and responds with updated data and error if any
 func (u *user) Update(id int, userRequest *models.User) (updatedUser *models.User, err error) {
 	userRequest.ID = uint(id)
-	if res := db.Save(userRequest); res.Error != nil {
+	if err := db.Save(userRequest).Error; err != nil {
 		fmt.Println("Error while updating the User with ID: ", id, ", err: ", err)
 
 		return nil, err
 	}
 
-	if updatedUser, err = u.Get(id); err != nil {
-		return nil, err
-	}
-
-	return updatedUser, nil
+	return u.Get(id)
 }
 
 // Delete will delete User with given UserID and responds with error if any
 func (u *user) Delete(id int) (err error) {
-	if res := db.Delete(&models.User{}, id); res.Error != nil {
+	if err := db.Delete(&models.User{}, id).Error; err != nil {
 		fmt.Println("Error while deleting the User with ID: ", id, ", err: ", err)
 
 		return err

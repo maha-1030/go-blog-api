@@ -61,8 +61,11 @@ func (t *tag) Get(idString string) (existingTag *models.Tag, err error) {
 	if existingTag, err = t.ts.Get(id); err != nil {
 		return nil, err
 	}
+	if existingTag == nil {
+		return nil, fmt.Errorf("no tag found with the id: %v", id)
+	}
 
-	return
+	return existingTag, nil
 }
 
 // Update checks for the existence of tag and calls store layer to update the tag
@@ -72,9 +75,12 @@ func (t *tag) Update(idString string, tagRequest *models.Tag) (updatedTag *model
 		return nil, err
 	}
 
-	_, err = t.ts.Get(id)
+	existingTag, err := t.ts.Get(id)
 	if err != nil {
 		return nil, err
+	}
+	if existingTag == nil {
+		return nil, fmt.Errorf("no tag found with id: %v", id)
 	}
 
 	if tagWithTagline, _ := t.ts.GetByTagLine(tagRequest.TagLine); tagWithTagline != nil {
@@ -91,9 +97,12 @@ func (t *tag) Delete(idString string) (err error) {
 		return err
 	}
 
-	_, err = t.ts.Get(id)
+	existingTag, err := t.ts.Get(id)
 	if err != nil {
 		return err
+	}
+	if existingTag == nil {
+		return fmt.Errorf("no tag found with id: %v", id)
 	}
 
 	return t.ts.Delete(id)

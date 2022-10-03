@@ -36,7 +36,7 @@ func GetCommentStore() CommentStore {
 
 // Create will create the new Comment in the database and responds with the newly created Comment and error if any
 func (c *comment) Create(commentRequest *models.Comment) (newComment *models.Comment, err error) {
-	if res := db.Create(commentRequest); res.Error != nil {
+	if err := db.Create(commentRequest).Error; err != nil {
 		fmt.Println("Error while creating the new Comment, err: ", err)
 
 		return nil, err
@@ -49,11 +49,9 @@ func (c *comment) Create(commentRequest *models.Comment) (newComment *models.Com
 func (c *comment) Get(id int) (existingComment *models.Comment, err error) {
 	existingComment = &models.Comment{}
 
-	if res := db.First(existingComment, id); res.Error != nil {
-		if res.Error == gorm.ErrRecordNotFound {
-			fmt.Println("No Comment found with the ID: ", id)
-
-			return nil, fmt.Errorf("no Comment found with the ID: %v", id)
+	if err := db.First(existingComment, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
 		}
 
 		fmt.Println("Error while retrieving a Comment with ID: ", id, ", err: ", err)
@@ -67,22 +65,18 @@ func (c *comment) Get(id int) (existingComment *models.Comment, err error) {
 // Update will update the Comment with given CommentID and responds with updated data and error if any
 func (c *comment) Update(id int, commentRequest *models.Comment) (updatedComment *models.Comment, err error) {
 	commentRequest.ID = uint(id)
-	if res := db.Save(commentRequest); res.Error != nil {
+	if err := db.Save(commentRequest).Error; err != nil {
 		fmt.Println("Error while updating the Comment with ID: ", id, ", err: ", err)
 
 		return nil, err
 	}
 
-	if updatedComment, err = c.Get(id); err != nil {
-		return nil, err
-	}
-
-	return updatedComment, nil
+	return c.Get(id)
 }
 
 // Delete will delete Comment with given CommentID and responds with error if any
 func (c *comment) Delete(id int) (err error) {
-	if res := db.Delete(&models.Comment{}, id); res.Error != nil {
+	if err := db.Delete(&models.Comment{}, id).Error; err != nil {
 		fmt.Println("Error while deleting the Comment with ID: ", id, ", err: ", err)
 
 		return err

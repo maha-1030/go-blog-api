@@ -20,8 +20,6 @@ func init() {
 		panic("failed to connect database with error: " + err.Error())
 	}
 
-	defer db.Close()
-
 	fmt.Println("successfully connected to the database")
 
 	db.AutoMigrate(&models.Tag{}, &models.Comment{}, &models.Post{}, &models.User{})

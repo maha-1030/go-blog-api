@@ -37,7 +37,7 @@ func GetTagStore() TagStore {
 
 // Create will create the new Tag in the database and responds with the newly created Tag and error if any
 func (t *tag) Create(tagRequest *models.Tag) (newTag *models.Tag, err error) {
-	if res := db.Create(tagRequest); res.Error != nil {
+	if err := db.Create(tagRequest).Error; err != nil {
 		fmt.Println("Error while creating the new Tag, err: ", err)
 
 		return nil, err
@@ -50,11 +50,9 @@ func (t *tag) Create(tagRequest *models.Tag) (newTag *models.Tag, err error) {
 func (t *tag) Get(id int) (existingTag *models.Tag, err error) {
 	existingTag = &models.Tag{}
 
-	if res := db.First(existingTag, id); res.Error != nil {
-		if res.Error == gorm.ErrRecordNotFound {
-			fmt.Println("No Tag found with the ID: ", id)
-
-			return nil, fmt.Errorf("no Tag found with the ID: %v", id)
+	if err := db.First(existingTag, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
 		}
 
 		fmt.Println("Error while retrieving a Tag with ID: ", id, ", err: ", err)
@@ -69,11 +67,9 @@ func (t *tag) Get(id int) (existingTag *models.Tag, err error) {
 func (t *tag) GetByTagLine(tagLine string) (existingTag *models.Tag, err error) {
 	existingTag = &models.Tag{}
 
-	if res := db.Where("tag_line = ?", tagLine).First(existingTag); res.Error != nil {
-		if res.Error == gorm.ErrRecordNotFound {
-			fmt.Println("No Tag found with the tagline: ", tagLine)
-
-			return nil, fmt.Errorf("no Tag found with the tagline: %v", tagLine)
+	if err := db.Where("tag_line = ?", tagLine).First(existingTag).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
 		}
 
 		fmt.Println("Error while retrieving a Tag with tagline: ", tagLine, ", err: ", err)
@@ -87,22 +83,18 @@ func (t *tag) GetByTagLine(tagLine string) (existingTag *models.Tag, err error) 
 // Update will update the Tag with given TagID and responds with updated data and error if any
 func (t *tag) Update(id int, tagRequest *models.Tag) (updatedTag *models.Tag, err error) {
 	tagRequest.ID = uint(id)
-	if res := db.Save(tagRequest); res.Error != nil {
+	if err := db.Save(tagRequest).Error; err != nil {
 		fmt.Println("Error while updating the Tag with ID: ", id, ", err: ", err)
 
 		return nil, err
 	}
 
-	if updatedTag, err = t.Get(id); err != nil {
-		return nil, err
-	}
-
-	return updatedTag, nil
+	return t.Get(id)
 }
 
 // Delete will delete Tag with given TagID and responds with error if any
 func (t *tag) Delete(id int) (err error) {
-	if res := db.Delete(&models.Tag{}, id); res.Error != nil {
+	if err := db.Delete(&models.Tag{}, id).Error; err != nil {
 		fmt.Println("Error while deleting the Tag with ID: ", id, ", err: ", err)
 
 		return err

@@ -57,10 +57,16 @@ func (c *comment) Create(postIdString, username string, commentRequest *models.C
 	if err != nil {
 		return nil, err
 	}
+	if existingUser == nil {
+		return nil, fmt.Errorf("no user found with the authorized username: %v", username)
+	}
 
 	existingPost, err := c.ps.Get(postID)
 	if err != nil {
 		return nil, err
+	}
+	if existingPost == nil {
+		return nil, fmt.Errorf("no post found with the id: %v", postID)
 	}
 
 	commentRequest.AuthorID = existingUser.ID
@@ -76,7 +82,14 @@ func (c *comment) Get(idString string) (existingComment *models.Comment, err err
 		return nil, err
 	}
 
-	return c.cs.Get(id)
+	if existingComment, err = c.cs.Get(id); err != nil {
+		return nil, err
+	}
+	if existingComment == nil {
+		return nil, fmt.Errorf("no comment found with id: %v", id)
+	}
+
+	return existingComment, nil
 }
 
 // Update checks for the existence of comment and calls store layer to update the Comment
@@ -95,15 +108,24 @@ func (c *comment) Update(idString, postIdString, username string, commentRequest
 	if err != nil {
 		return nil, err
 	}
+	if existingUser == nil {
+		return nil, fmt.Errorf("no user found with the authorized username: %v", username)
+	}
 
 	existingPost, err := c.ps.Get(postID)
 	if err != nil {
 		return nil, err
 	}
+	if existingPost == nil {
+		return nil, fmt.Errorf("no post found with the id: %v", postID)
+	}
 
 	existingComment, err := c.cs.Get(id)
 	if err != nil {
 		return nil, err
+	}
+	if existingComment == nil {
+		return nil, fmt.Errorf("no comment found with id: %v", id)
 	}
 
 	if existingUser.ID != existingComment.AuthorID {
@@ -130,10 +152,16 @@ func (c *comment) Delete(idString, username string) (err error) {
 	if err != nil {
 		return err
 	}
+	if existingUser == nil {
+		return fmt.Errorf("no user found with the authorized username: %v", username)
+	}
 
 	existingComment, err := c.cs.Get(id)
 	if err != nil {
 		return nil
+	}
+	if existingComment == nil {
+		return fmt.Errorf("no comment found with id: %v", id)
 	}
 
 	if existingUser.ID != existingComment.AuthorID {
