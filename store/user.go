@@ -3,16 +3,18 @@ package store
 import (
 	"fmt"
 
+	"github.com/jinzhu/gorm"
 	"github.com/maha-1030/go-blog-api/models"
-	"gorm.io/gorm"
 )
 
+// user type is used to implement UserStore
 type user struct{}
 
 // UserStore interface contains the User related methods that operate on database
 type UserStore interface {
 	Create(userRequest *models.User) (newUser *models.User, err error)
 	Get(id int) (existingUser *models.User, err error)
+	GetByUsername(username string) (existingUser *models.User, err error)
 	Update(id int, userRequest *models.User) (updatedUser *models.User, err error)
 	Delete(id int) (err error)
 }
@@ -57,6 +59,25 @@ func (u *user) Get(id int) (existingUser *models.User, err error) {
 		}
 
 		fmt.Println("Error while retrieving a User with ID: ", id, ", err: ", err)
+
+		return nil, err
+	}
+
+	return existingUser, nil
+}
+
+// GetByUsername will retrieves the User with given Username and responds with retrieved data and error if any
+func (u *user) GetByUsername(username string) (existingUser *models.User, err error) {
+	existingUser = &models.User{}
+
+	if res := db.Where("name = ?", username).First(existingUser); res.Error != nil {
+		if res.Error == gorm.ErrRecordNotFound {
+			fmt.Println("No User found with the username: ", username)
+
+			return nil, fmt.Errorf("no User found with the username: %v", username)
+		}
+
+		fmt.Println("Error while retrieving a User with username: ", username, ", err: ", err)
 
 		return nil, err
 	}

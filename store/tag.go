@@ -3,8 +3,8 @@ package store
 import (
 	"fmt"
 
+	"github.com/jinzhu/gorm"
 	"github.com/maha-1030/go-blog-api/models"
-	"gorm.io/gorm"
 )
 
 type tag struct{}
@@ -13,6 +13,7 @@ type tag struct{}
 type TagStore interface {
 	Create(tagRequest *models.Tag) (newTag *models.Tag, err error)
 	Get(id int) (existingTag *models.Tag, err error)
+	GetByTagLine(tagLine string) (existingTag *models.Tag, err error)
 	Update(id int, tagRequest *models.Tag) (updatedTag *models.Tag, err error)
 	Delete(id int) (err error)
 }
@@ -57,6 +58,25 @@ func (t *tag) Get(id int) (existingTag *models.Tag, err error) {
 		}
 
 		fmt.Println("Error while retrieving a Tag with ID: ", id, ", err: ", err)
+
+		return nil, err
+	}
+
+	return existingTag, nil
+}
+
+// GetByTagLine will retrieves the Tag with given tagline and responds with retrieved data and error if any
+func (t *tag) GetByTagLine(tagLine string) (existingTag *models.Tag, err error) {
+	existingTag = &models.Tag{}
+
+	if res := db.Where("tag_line = ?", tagLine).First(existingTag); res.Error != nil {
+		if res.Error == gorm.ErrRecordNotFound {
+			fmt.Println("No Tag found with the tagline: ", tagLine)
+
+			return nil, fmt.Errorf("no Tag found with the tagline: %v", tagLine)
+		}
+
+		fmt.Println("Error while retrieving a Tag with tagline: ", tagLine, ", err: ", err)
 
 		return nil, err
 	}

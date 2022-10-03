@@ -17,16 +17,21 @@ func init() {
 }
 
 // CreateToken will create the signed jwt token with given user claims
-func CreateToken(username string) (string, error) {
+func CreateToken(username string) (*string, error) {
 	claims := jwt.MapClaims{}
 
 	claims["username"] = username
 	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 	claims["authorized"] = true
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString([]byte(secretKey))
+	token, err := jwtToken.SignedString([]byte(secretKey))
+	if err != nil {
+		return nil, err
+	}
+
+	return &token, nil
 }
 
 // ValidateToken will validate the given jwt token and responds with username

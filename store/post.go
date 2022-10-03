@@ -3,8 +3,8 @@ package store
 import (
 	"fmt"
 
+	"github.com/jinzhu/gorm"
 	"github.com/maha-1030/go-blog-api/models"
-	"gorm.io/gorm"
 )
 
 type post struct{}
